@@ -30,10 +30,29 @@ try {
     $ln = $_POST["studentLastName"] ?? "";
     $email = $_POST["studentEmail"] ?? "";
     $studentId = $_POST["studentID"] ?? "";
+    $yearLevel = $_POST["yearLevel"] ?? "";
+    $section = $_POST["section"] ?? "";
 
     require_once '../../config/db.php';
     require_once '../../model/admin/add_student_model.php';
     require_once '../../controller/admin/add_student_contr.php';
+
+
+// Ensure default profile photo exists
+$defaultPhotoDir = __DIR__ . "/../../uploads/profile/";
+$defaultPhotoPath = $defaultPhotoDir . "default_user.png";
+
+if (!is_dir($defaultPhotoDir)) {
+    mkdir($defaultPhotoDir, 0777, true);
+}
+
+if (!file_exists($defaultPhotoPath)) {
+    // Copy default avatar from assets to uploads
+    $sourceDefaultPhoto = __DIR__ . "/../../../COMSA-NOW/assets/img/team/default_user.png";
+    if (file_exists($sourceDefaultPhoto)) {
+        copy($sourceDefaultPhoto, $defaultPhotoPath);
+    }
+}
 
     $errors = is_input_empty($fn, $ln, $email, $studentId);
 
@@ -49,44 +68,38 @@ try {
     $name = "$fn $ln";
     $password = strtoupper($ln);
 
-    $studentDataId = add_student($pdo, $studentId, $name, $email, $password, null);
+    // If no avatar uploaded, use default
+    $profilePhoto = "uploads/profile/default_user.png";
 
+    $studentDataId = add_student($pdo, $studentId, $name, $email, $password, null, $yearLevel, $section);
+
+    // Handle custom avatar upload if provided
     if (!empty($_FILES['studentAvatar']['name'])) {
-        $fileTmpPath = $_FILES['studentAvatar']['tmp_name'];
-        $fileName = basename($_FILES['studentAvatar']['name']);
-        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    $fileTmpPath = $_FILES['studentAvatar']['tmp_name'];
+    $fileName = basename($_FILES['studentAvatar']['name']);
+    $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        if (!in_array($fileExtension, $allowedExts)) {
-            http_response_code(422);
-            echo json_encode([
-                "success" => false,
-                "errors" => ["image" => "Invalid file type. Allowed: jpg, jpeg, png, gif, webp"]
-            ]);
-            exit;
-        }
-
-        $safeFileName = uniqid("img_", true) . "." . $fileExtension;
-        $uploadDir = __DIR__ . "/../../uploads/profile/";
-        $destPath = $uploadDir . $safeFileName;
-
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-
-        if (move_uploaded_file($fileTmpPath, $destPath)) {
-            $studentImagePath = "uploads/profile/" . $safeFileName;
-            // Step 3: Update event with image path
-            update_student_profile($pdo, (int)$studentDataId, $studentImagePath);
-        } else {
-            http_response_code(500);
-            echo json_encode([
-                "success" => false,
-                "errors" => ["image" => "Failed to upload file."]
-            ]);
-            exit;
-        }
+    $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    if (!in_array($fileExtension, $allowedExts)) {
+        http_response_code(422);
+        echo json_encode([
+            "success" => false,
+            "errors" => ["image" => "Invalid file type. Allowed: jpg, jpeg, png, gif, webp"]
+        ]);
+        exit;
     }
+
+    $safeFileName = uniqid("img_", true) . "." . $fileExtension;
+    $uploadDir = __DIR__ . "/../../uploads/profile/";
+    $destPath = $uploadDir . $safeFileName;
+
+    if (move_uploaded_file($fileTmpPath, $destPath)) {
+        $studentImagePath = "uploads/profile/" . $safeFileName;
+        // Update profile with custom image
+        update_student_profile($pdo, (int)$studentDataId, $studentImagePath);
+        $profilePhoto = $studentImagePath;
+    }
+}
 
     echo json_encode([
         "success" => true

@@ -64,17 +64,20 @@ CREATE TABLE message_read_receipts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   message_id INT NOT NULL,
   student_id INT NOT NULL,
-  read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
-  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-  UNIQUE KEY unique_read_receipt (message_id, student_id)
+  comment TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (post_id) REFERENCES admin_post(id) ON DELETE CASCADE,
+  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
 );
 
+---------------------------------------NEW TABLE TO ADD----------------------------------------
+---------------------------------------NEW TABLE TO ALTER--------------------------------------
+ALTER TABLE projects
+ADD COLUMN visibility ENUM('public', 'hidden') NOT NULL DEFAULT 'public',
+ADD COLUMN featured BOOLEAN NOT NULL DEFAULT FALSE;
 
 
-
-
-
-
-
-
+-- For MySQL 8.0.16+ you can add constraints for the nickname
+-- ALTER TABLE students 
+-- ADD CONSTRAINT chk_nickname_letters_only 
+-- CHECK (nickname REGEXP '^[A-Za-z]+$' OR nickname IS NULL);

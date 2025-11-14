@@ -2,17 +2,22 @@
 
 declare(strict_types=1);
 
-function add_student(object $pdo, string $id, string $name, string $email, string $password, ?string $profile)
+function add_student(object $pdo, string $id, string $name, string $email, string $password, ?string $profile, string $year_level, string $section)
 {
+    $defaultPhoto = "uploads/profile/default_user.png";
+    $profile = $profile ?? $defaultPhoto;
+
     try {
-        $stmt = $pdo->prepare("INSERT INTO students (student_number, name, email, password, profile_photo)
-                               VALUES (?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO students (student_number, name, email, password, profile_photo, year_level, section)
+                               VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $id,
             $name,
             $email,
             $password,
-            $profile
+            $profile,
+            $year_level,
+            $section
         ]);
 
         return $pdo->lastInsertId();

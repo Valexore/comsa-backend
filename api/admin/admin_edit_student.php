@@ -15,6 +15,8 @@ $student_id = $_POST["editStudentId"] ?? null;
 $name = trim($_POST["editFirstName"] ?? "");
 $email = trim($_POST["editEmail"] ?? "");
 $student_number = trim($_POST["editStudentID"] ?? "");
+$year_level = trim($_POST["editYearLevel"] ?? "");
+$section = trim($_POST["editSection"] ?? "");
 
 if (!$student_id) {
     echo json_encode(["success" => false, "message" => "Student ID is required"]);
@@ -66,7 +68,7 @@ try {
     // Update student info
     $stmt = $pdo->prepare("
         UPDATE students 
-        SET name = :name, email = :email, student_number = :student_number, profile_photo = :profile_photo
+        SET name = :name, email = :email, student_number = :student_number, profile_photo = :profile_photo, year_level = :year_level, section = :section
         WHERE id = :id
     ");
 
@@ -75,7 +77,9 @@ try {
         ":email" => $email,
         ":student_number" => $student_number,
         ":profile_photo" => $newPhotoPath,
-        ":id" => $student_id
+        ":year_level" => $year_level,
+        ":section" => $section,
+        ":id" => $student_id    
     ]);
 
     echo json_encode(["success" => true, "message" => "Student updated successfully"]);
